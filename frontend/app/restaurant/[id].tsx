@@ -18,7 +18,6 @@ import {
   View,
 } from "react-native";
 
-
 type PlaceDetails = {
   place_id: string;
   name?: string;
@@ -39,8 +38,15 @@ type PlaceDetails = {
 
 export default function RestaurantDetailScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
-  const placeId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+  const params = useLocalSearchParams<{
+    id?: string | string[];
+  }>();
+
+  const placeId = Array.isArray(params.id)
+    ? params.id[0]
+    : params.id;
+
   const [place, setPlace] = useState<PlaceDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [favorite, setFavorite] = useState(false);
@@ -56,15 +62,20 @@ export default function RestaurantDetailScreen() {
 
   async function loadDetails(id: string) {
     try {
-      const response = await axios.get<PlaceDetails>(`${API_URL}/place/${id}`, {
-        timeout: 20000,
-      });
+      const response = await axios.get<PlaceDetails>(
+        `${API_URL}/place/${id}`,
+        {
+          timeout: 20000,
+        },
+      );
+
       setPlace(response.data);
       setFavorite(await isFavorite(id));
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? error.response?.data?.detail || error.message
         : "Mekan bilgileri alınamadı.";
+
       Alert.alert("Detaylar yüklenemedi", String(message));
     } finally {
       setLoading(false);
@@ -72,13 +83,20 @@ export default function RestaurantDetailScreen() {
   }
 
   const photoUrl = useMemo(() => {
-    if (!place?.photo_reference) return null;
-    return `${API_URL}/photo?reference=${encodeURIComponent(place.photo_reference)}&maxwidth=1400`;
+    if (!place?.photo_reference) {
+      return null;
+    }
+
+    return `${API_URL}/photo?reference=${encodeURIComponent(
+      place.photo_reference,
+    )}&maxwidth=1400`;
   }, [place?.photo_reference]);
 
-
   async function changeFavorite() {
-    if (!place?.place_id) return;
+    if (!place?.place_id) {
+      return;
+    }
+
     const item: Restaurant = {
       place_id: place.place_id,
       name: place.name || "Mekan",
@@ -93,27 +111,49 @@ export default function RestaurantDetailScreen() {
       latitude: place.latitude,
       longitude: place.longitude,
     };
+
     const added = await toggleFavorite(item);
+
     setFavorite(added);
-    Alert.alert(added ? "Favorilere eklendi" : "Favorilerden çıkarıldı", item.name);
+
+    Alert.alert(
+      added ? "Favorilere eklendi" : "Favorilerden çıkarıldı",
+      item.name,
+    );
   }
 
   async function openMaps() {
     const fallback =
-      place?.latitude && place?.longitude
+      place?.latitude !== undefined &&
+      place?.longitude !== undefined
         ? `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`
         : null;
+
     const url = place?.google_maps_url || fallback;
-    if (url) await Linking.openURL(url);
+
+    if (!url) {
+      Alert.alert("Konum bulunamadı", "Bu mekanın konum bilgisi yok.");
+      return;
+    }
+
+    await Linking.openURL(url);
   }
 
   async function callPlace() {
-    if (!place?.phone) return;
-    await Linking.openURL(`tel:${place.phone.replace(/\s/g, "")}`);
+    if (!place?.phone) {
+      return;
+    }
+
+    await Linking.openURL(
+      `tel:${place.phone.replace(/\s/g, "")}`,
+    );
   }
 
   async function openWebsite() {
-    if (!place?.website) return;
+    if (!place?.website) {
+      return;
+    }
+
     await Linking.openURL(place.website);
   }
 
@@ -121,8 +161,12 @@ export default function RestaurantDetailScreen() {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <Stack.Screen options={{ headerShown: false }} />
+
         <ActivityIndicator size="large" color="#D92D20" />
-        <Text style={styles.loadingText}>Mekan detayları yükleniyor...</Text>
+
+        <Text style={styles.loadingText}>
+          Mekan detayları yükleniyor...
+        </Text>
       </SafeAreaView>
     );
   }
@@ -131,38 +175,80 @@ export default function RestaurantDetailScreen() {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.errorTitle}>Mekan bulunamadı</Text>
-        <Pressable style={styles.primaryButton} onPress={() => router.back()}>
-          <Text style={styles.primaryButtonText}>Geri dön</Text>
+
+        <Text style={styles.errorTitle}>
+          Mekan bulunamadı
+        </Text>
+
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.primaryButtonText}>
+            Geri dön
+          </Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
   const isOpen = place.open_now === true;
-  const statusText = place.open_now === true ? "Şu an açık" : place.open_now === false ? "Şu an kapalı" : "Çalışma durumu bilinmiyor";
+
+  const statusText =
+    place.open_now === true
+      ? "Şu an açık"
+      : place.open_now === false
+        ? "Şu an kapalı"
+        : "Çalışma durumu bilinmiyor";
 
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.hero}>
           {photoUrl ? (
-            <Image source={{ uri: photoUrl }} style={styles.heroImage} resizeMode="cover" />
+            <Image
+              source={{ uri: photoUrl }}
+              style={styles.heroImage}
+              resizeMode="cover"
+            />
           ) : (
             <View style={styles.photoFallback}>
-              <Ionicons name="restaurant" size={54} color="#D92D20" />
+              <Ionicons
+                name="restaurant"
+                size={54}
+                color="#D92D20"
+              />
             </View>
           )}
+
           <View style={styles.heroOverlay} />
 
           <SafeAreaView style={styles.heroControls}>
-            <Pressable style={styles.roundButton} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={25} color="#171717" />
+            <Pressable
+              style={styles.roundButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color="#171717"
+              />
             </Pressable>
-            <Pressable style={styles.roundButton} onPress={() => void changeFavorite()}>
-              <Ionicons name={favorite ? "heart" : "heart-outline"} size={23} color="#D92D20" />
+
+            <Pressable
+              style={styles.roundButton}
+              onPress={() => void changeFavorite()}
+            >
+              <Ionicons
+                name={favorite ? "heart" : "heart-outline"}
+                size={22}
+                color="#D92D20"
+              />
             </Pressable>
           </SafeAreaView>
         </View>
@@ -170,64 +256,143 @@ export default function RestaurantDetailScreen() {
         <View style={styles.contentCard}>
           <View style={styles.titleRow}>
             <View style={styles.titleArea}>
-              <Text style={styles.name}>{place.name || "Mekan"}</Text>
+              <Text style={styles.name}>
+                {place.name || "Mekan"}
+              </Text>
+
               <View style={styles.ratingRow}>
-                <Ionicons name="star" size={18} color="#F4B400" />
-                <Text style={styles.rating}>{place.rating ?? "–"}</Text>
+                <Ionicons
+                  name="star"
+                  size={18}
+                  color="#F4B400"
+                />
+
+                <Text style={styles.rating}>
+                  {place.rating ?? "–"}
+                </Text>
+
                 {place.user_ratings_total ? (
-                  <Text style={styles.reviewCount}>({place.user_ratings_total} yorum)</Text>
+                  <Text style={styles.reviewCount}>
+                    ({place.user_ratings_total} yorum)
+                  </Text>
                 ) : null}
               </View>
             </View>
 
-            <View style={[styles.openBadge, isOpen ? styles.openBadgeActive : styles.openBadgePassive]}>
-              <View style={[styles.openDot, isOpen ? styles.openDotActive : styles.openDotPassive]} />
-              <Text style={[styles.openText, isOpen ? styles.openTextActive : styles.openTextPassive]}>
+            <View
+              style={[
+                styles.openBadge,
+                isOpen
+                  ? styles.openBadgeActive
+                  : styles.openBadgePassive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.openDot,
+                  isOpen
+                    ? styles.openDotActive
+                    : styles.openDotPassive,
+                ]}
+              />
+
+              <Text
+                style={[
+                  styles.openText,
+                  isOpen
+                    ? styles.openTextActive
+                    : styles.openTextPassive,
+                ]}
+              >
                 {statusText}
               </Text>
             </View>
           </View>
 
           <View style={styles.infoBlock}>
-            <Ionicons name="location-outline" size={22} color="#D92D20" />
-            <Text style={styles.infoText}>{place.address || "Adres bilgisi yok"}</Text>
+            <Ionicons
+              name="location-outline"
+              size={22}
+              color="#D92D20"
+            />
+
+            <Text style={styles.infoText}>
+              {place.address || "Adres bilgisi yok"}
+            </Text>
           </View>
 
           <View style={styles.actionGrid}>
-            <Pressable style={styles.primaryAction} onPress={() => void openMaps()}>
-              <Ionicons name="navigate" size={21} color="#fff" />
-              <Text style={styles.primaryActionText}>Yol tarifi</Text>
+            <Pressable
+              style={styles.primaryAction}
+              onPress={() => void openMaps()}
+            >
+              <Ionicons
+                name="navigate"
+                size={21}
+                color="#FFFFFF"
+              />
+
+              <Text style={styles.primaryActionText}>
+                Yol tarifi
+              </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.secondaryAction, !place.phone && styles.disabledAction]}
+              style={[
+                styles.secondaryAction,
+                !place.phone && styles.disabledAction,
+              ]}
               disabled={!place.phone}
               onPress={() => void callPlace()}
             >
-              <Ionicons name="call-outline" size={21} color="#D92D20" />
-              <Text style={styles.secondaryActionText}>Ara</Text>
+              <Ionicons
+                name="call-outline"
+                size={21}
+                color="#D92D20"
+              />
+
+              <Text style={styles.secondaryActionText}>
+                Ara
+              </Text>
             </Pressable>
 
             <Pressable
-              style={[styles.secondaryAction, !place.website && styles.disabledAction]}
+              style={[
+                styles.secondaryAction,
+                !place.website && styles.disabledAction,
+              ]}
               disabled={!place.website}
               onPress={() => void openWebsite()}
             >
-              <Ionicons name="globe-outline" size={21} color="#D92D20" />
-              <Text style={styles.secondaryActionText}>Web sitesi</Text>
+              <Ionicons
+                name="globe-outline"
+                size={21}
+                color="#D92D20"
+              />
+
+              <Text style={styles.secondaryActionText}>
+                Web sitesi
+              </Text>
             </Pressable>
           </View>
 
-          {place.weekday_text && place.weekday_text.length > 0 && (
-            <View style={styles.hoursCard}>
-              <Text style={styles.hoursTitle}>Çalışma saatleri</Text>
-              {place.weekday_text.map((line) => (
-                <Text key={line} style={styles.hoursText}>
-                  {line}
+          {place.weekday_text &&
+            place.weekday_text.length > 0 && (
+              <View style={styles.hoursCard}>
+                <Text style={styles.hoursTitle}>
+                  Çalışma saatleri
                 </Text>
-              ))}
-            </View>
-          )}
+
+                {place.weekday_text.map((line) => (
+                  <Text
+                    key={line}
+                    style={styles.hoursText}
+                  >
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            )}
         </View>
       </ScrollView>
     </View>
@@ -239,85 +404,112 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F6F6F6",
   },
+
   scrollContent: {
     paddingBottom: 36,
   },
+
   hero: {
     height: 335,
     backgroundColor: "#FCECEB",
   },
+
   heroImage: {
     width: "100%",
     height: "100%",
   },
+
   photoFallback: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.12)",
   },
+
   heroControls: {
     ...StyleSheet.absoluteFillObject,
-    paddingHorizontal: 18,
+    paddingHorizontal: 26,
+    paddingTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
   },
+
   roundButton: {
-    width: 46,
-    height: 46,
+    width: 44,
+    height: 44,
     marginTop: 8,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 23,
-    backgroundColor: "rgba(255,255,255,0.94)",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.96)",
+
+    shadowColor: "#000000",
+    shadowOpacity: 0.16,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+
+    elevation: 4,
   },
+
   contentCard: {
     marginTop: -24,
     marginHorizontal: 14,
     borderRadius: 28,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     padding: 22,
-    shadowColor: "#000",
+
+    shadowColor: "#000000",
     shadowOpacity: 0.08,
     shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+
     elevation: 4,
   },
+
   titleRow: {
     gap: 14,
   },
+
   titleArea: {
     flex: 1,
   },
+
   name: {
     color: "#171717",
-    fontSize: 27,
+    fontSize: 25,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
+
   ratingRow: {
     marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
   },
+
   rating: {
     color: "#242424",
     fontSize: 16,
     fontWeight: "800",
   },
+
   reviewCount: {
-    color: "#777",
+    color: "#777777",
     fontSize: 14,
   },
+
   openBadge: {
     alignSelf: "flex-start",
     flexDirection: "row",
@@ -327,33 +519,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
   },
+
   openBadgeActive: {
     backgroundColor: "#ECFDF3",
   },
+
   openBadgePassive: {
     backgroundColor: "#F2F4F7",
   },
+
   openDot: {
     width: 8,
     height: 8,
     borderRadius: 99,
   },
+
   openDotActive: {
     backgroundColor: "#12B76A",
   },
+
   openDotPassive: {
     backgroundColor: "#98A2B3",
   },
+
   openText: {
     fontSize: 13,
     fontWeight: "800",
   },
+
   openTextActive: {
     color: "#067647",
   },
+
   openTextPassive: {
     color: "#667085",
   },
+
   infoBlock: {
     marginTop: 24,
     flexDirection: "row",
@@ -363,16 +564,19 @@ const styles = StyleSheet.create({
     borderTopColor: "#F0F0F0",
     paddingTop: 20,
   },
+
   infoText: {
     flex: 1,
     color: "#5D5D5D",
     fontSize: 15,
     lineHeight: 22,
   },
+
   actionGrid: {
     marginTop: 24,
     gap: 10,
   },
+
   primaryAction: {
     height: 56,
     flexDirection: "row",
@@ -382,11 +586,13 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: "#D92D20",
   },
+
   primaryActionText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
   },
+
   secondaryAction: {
     height: 52,
     flexDirection: "row",
@@ -398,49 +604,58 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     backgroundColor: "#FFF8F7",
   },
+
   secondaryActionText: {
     color: "#A52218",
     fontSize: 15,
     fontWeight: "800",
   },
+
   disabledAction: {
     opacity: 0.38,
   },
+
   hoursCard: {
     marginTop: 24,
     borderRadius: 20,
     backgroundColor: "#F8F8F8",
     padding: 18,
   },
+
   hoursTitle: {
     marginBottom: 10,
-    color: "#222",
+    color: "#222222",
     fontSize: 17,
     fontWeight: "800",
   },
+
   hoursText: {
     marginTop: 5,
-    color: "#666",
+    color: "#666666",
     fontSize: 13,
     lineHeight: 19,
   },
+
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 14,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     padding: 24,
   },
+
   loadingText: {
-    color: "#666",
+    color: "#666666",
     fontSize: 15,
   },
+
   errorTitle: {
-    color: "#222",
+    color: "#222222",
     fontSize: 22,
     fontWeight: "800",
   },
+
   primaryButton: {
     marginTop: 18,
     borderRadius: 16,
@@ -448,8 +663,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
+
   primaryButtonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontWeight: "800",
   },
 });
