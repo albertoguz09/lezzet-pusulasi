@@ -1,0 +1,18 @@
+LEZZET PUSULASI - HAZIR SÜRÜM
+
+Bu pakette favoriler, favoriler ekranı, fotoğraflı kartlar, mesafe/puan/fiyat/açık filtreleri ve daha doğru yemek araması hazırdır.
+Mevcut API anahtarın backend/.env içinde korunmuştur.
+
+1) BACKEND terminali:
+cd ~/Desktop/lezzet-pusulasi/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn server:app --reload --host 0.0.0.0 --port 8001
+
+2) FRONTEND için yeni terminal:
+cd ~/Desktop/lezzet-pusulasi/frontend
+npm install
+npx expo start -c
+
+Not: Telefon ve Mac aynı Wi-Fi ağına bağlı olsun.
