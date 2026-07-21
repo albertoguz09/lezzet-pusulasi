@@ -1,0 +1,16 @@
+LEZZET PUSULASI - ÇALIŞTIRMA
+
+1) backend/.env.example dosyasını backend/.env olarak kopyala.
+2) backend/.env içine yeni Google Places API anahtarını yaz.
+
+BACKEND:
+cd ~/Desktop/lezzet-pusulasi/backend
+source venv/bin/activate
+uvicorn server:app --reload --host 0.0.0.0 --port 8001
+
+FRONTEND (başka terminal):
+cd ~/Desktop/lezzet-pusulasi/frontend
+npx expo start --tunnel
+
+Not: Wi-Fi IP'n değişirse frontend/app/(tabs)/index.tsx ve
+frontend/app/restaurant/[id].tsx içindeki API_URL değerini güncelle.
